@@ -1,0 +1,82 @@
+/* Dashboard.css */
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+  }
+  
+  .dashboard-container {
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+  }
+  
+  .user-info,
+  .date-info {
+    margin: 0;
+  }
+  
+  .logout-button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .logout-button:hover {
+    background-color: #c82333;
+  }
+  
+  .dashboard-nav {
+    margin: 20px 0;
+  }
+  
+  .dashboard-nav a {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+  }
+  
+  .dashboard-nav a:hover {
+    text-decoration: underline;
+  }
+  
+  .dashboard-main {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 5px;
+  }
+  
+  .login-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  .login-table th,
+  .login-table td {
+    border: 1px solid #dee2e6;
+    padding: 10px;
+    text-align: left;
+  }
+  
+  .login-table th {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .login-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }  

@@ -1,0 +1,231 @@
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background-color: #f2f2f2;
+    color: #495057;
+  }
+  
+  h1 {
+    color: #b11717;
+    font-weight: bold;
+  }
+  
+  p {
+    color: #333;
+    font-weight: bold;
+  }
+  
+  .header, .form-group {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .button {
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    transition-duration: 0.4s;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
+  .timesheet-container {
+    max-width: 960px;
+    padding: 20px;
+    margin: auto;
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+  }
+  
+  input[type="date"], input[type="number"], input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    margin-top: 3px;
+    margin-bottom: 16px;
+  }
+  
+  input[type="date"]:hover, input[type="number"]:hover, input[type="text"]:hover {
+    border-color: #555;
+  }
+  
+  .timesheet-table {
+    width: 100%;
+    margin: 20px auto;
+    border-collapse: collapse;
+    border: 2px solid #dee2e6;
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    border: 3px solid black; /* Black border around the entire table */
+  }
+  
+  .timesheet-table th, .timesheet-table td {
+    text-align: center;
+    padding: 12px;
+    border-bottom: 2px solid #dee2e6;
+    border: 1px solid black; /* Black border around each cell */
+  }
+  
+  .timesheet-table th {
+    background-color: #b11717;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
+  .timesheet-table tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .timesheet-table tr:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .logout-button {
+    padding: 12px 24px;
+    background-color: #b11717;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
+  .logout-button:hover {
+    background-color: #871515;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0 20px;
+  }
+  
+  .full-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 20px;
+  }
+  
+  .form-group input[type="date"]:hover {
+    cursor: pointer;
+  }
+  
+  .form-group input, .form-group select {
+    width: 100%;
+    padding: 12px 20px;
+    border: 2px solid #bfc9d9;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    color: #495057;
+    font-size: 16px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  
+  .form-group input:focus, .form-group select:focus {
+    border-color: #80bdff;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+  
+  .form-group input::placeholder, .form-group select::placeholder {
+    color: #6c757d;
+  }
+  
+  .top-section {
+    width: 100wh;
+    padding: 20px;
+    background-color: white;
+    /* background-color: #d8d2d2; */
+    border-bottom: 1px solid black;
+  }
+  
+  .bottom-section {
+    width: 100wh;
+    padding: 20px;
+    background-color: #bfbfbf;
+    /* background-color: #b11717; */
+  }
+  
+  .grid-form {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px; /* Adjust this value to change the spacing between input fields */
+  }
+  
+  .form-group {
+    flex: 1;
+    min-width: 200px; /* Ensure fields don't get too narrow */
+  }
+  
+  .submit-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .submit-button {
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 16px;
+  }
+  
+  .submit-button:hover {
+    background-color: #0e6bce;
+  }
+  
+  .button:hover {
+    background-color: #0e6bce;
+  }
+  
+  .edit-button {
+    min-width: 80px;
+    background-color: #555;
+  }
+  
+  .save-button {
+    background-color: #28a745;
+  }
+  
+  .save-button:hover {
+    background-color: #218838;
+  }
+  
+  .cancel-button {
+    background-color: #ffc107;
+  }
+  
+  .cancel-button:hover {
+    background-color: #e0a800;
+  }
+  
+  .delete-button {
+    min-width: 80px;
+    background-color: #dc3545;
+  }
+  
+  .delete-button:hover {
+    background-color: #c82333;
+  }  

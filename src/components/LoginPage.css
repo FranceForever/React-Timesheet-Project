@@ -1,0 +1,145 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+.login-container {
+  display: flex;
+  height: 100vh;
+  transition: all 0.3s ease-in-out;
+}
+
+.login-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  transition: all 0.3s ease-in-out;
+}
+
+.login-section.expanded {
+  flex: 2;
+}
+
+.left-section {
+  background-color: rgb(216, 210, 210);
+  color: black;
+  border-right: 1px solid #333;
+}
+
+.right-section {
+  background-color: rgb(177, 23, 23);
+  color: black;
+}
+
+.image-container {
+  width: 100%;
+  height: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-container.centered {
+  height: 100%;
+  justify-content: center;
+}
+
+.image-container.initial-centered {
+  height: 100%;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.section-image {
+  width: 60%;
+  height: 60%;
+  object-fit: cover;
+  border-radius: 100%;
+}
+
+.action-button {
+  padding: 15px 30px;
+  margin: 20px 0;
+  border: none;
+  border-radius: 5px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 80%;
+  max-width: 300px;
+  transition: all 0.3s ease-in-out;
+}
+
+.login-button {
+  background-color: rgb(177, 23, 23);
+  color: rgb(216, 210, 210);
+}
+
+.register-button {
+  background-color: rgb(216, 210, 210);
+  color: black;
+}
+
+.action-button:hover {
+  opacity: 0.9;
+}
+
+.form-section {
+  justify-content: center;
+  width: 100%;
+}
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.form-group {
+  margin: 30px 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form-group label {
+  text-align: left;
+  font-weight: bold;
+  font-size: 12px;
+  font-family: 'Arial', sans-serif;
+  display: block; /* Ensures labels take full width of the form-group, confined within the timesheet-container */
+  margin-bottom: 5px; /* Adds space below the label */
+  color: white; /* Ensures labels are readable against the dark background */
+  background-color: transparent; /* Keeps the background consistent with the container */
+}
+
+.form-group input,
+.form-group select {
+  padding: 10px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 5px;
+}
+
+.sub_button {
+  background-color: white;
+  color: black;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.2em;
+  font-weight: bold;
+  font-family: 'Arial', sans-serif;
+  margin-top: 20px;
+  align-self: center;
+}
+
+.sub_button:hover {
+  opacity: 0.9;
+}
