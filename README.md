@@ -1,3 +1,5 @@
+# This project is a Timesheet Entry Project built using Javascript, React, HTML/CSS and Firebase.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
