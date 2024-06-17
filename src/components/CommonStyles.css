@@ -6,7 +6,7 @@ body {
   }
   
   h1 {
-    color: #b11717;
+    color: #c63f3f;
     font-weight: bold;
   }
   
@@ -76,7 +76,7 @@ body {
   }
   
   .timesheet-table th {
-    background-color: #b11717;
+    background-color: #c63f3f;
     color: white;
     font-size: 16px;
     cursor: pointer;
@@ -92,7 +92,7 @@ body {
   
   .logout-button {
     padding: 12px 24px;
-    background-color: #b11717;
+    background-color: #c63f3f;
     border: none;
     border-radius: 5px;
     font-size: 16px;

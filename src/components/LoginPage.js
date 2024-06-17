@@ -70,6 +70,8 @@ function LoginPage() {
           phone: registerPhone,
           role: registerRole
         });
+        setStage(0);  // Reset the stage to the initial page
+        navigate('/');  // Optionally, use navigate to go to the root page or a specific path
       }
       console.log("User registered successfully!");
       navigate('/login');

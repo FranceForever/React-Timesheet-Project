@@ -215,7 +215,7 @@ function DeveloperTimesheetEntry() {
                 </div> */}
               </div>
               <div className="submit-container">
-                <button type="submit" className="submit-button button">Submit</button>
+                <button type="submit" className="submit-button button">Add New Entry</button>
               </div>
             </form>
           </>
@@ -230,7 +230,7 @@ function DeveloperTimesheetEntry() {
               <th onClick={toggleSortOrder} style={{ cursor: 'pointer' }}>
                 Date {sortOrder === 'desc' ? <FaArrowDown /> : <FaArrowUp />}
               </th>
-              <th>Time</th>
+              <th>Time of Entry</th>
               <th>Hours Worked</th>
               <th>Task Description</th>
               {/* <th>Collaborators</th> Add header for new column */}

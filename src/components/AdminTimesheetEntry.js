@@ -197,7 +197,7 @@ function AdminTimesheetEntry() {
             <th onClick={toggleSortOrder} style={{ cursor: 'pointer' }}>
               Date {sortOrder === 'desc' ? <FaArrowDown /> : <FaArrowUp />}
             </th>
-            <th>Time</th>
+            <th>Time of Entry</th>
             <th>Hours Worked</th>
             <th>Task Description</th>
             <th>Approved By</th>
