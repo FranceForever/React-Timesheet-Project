@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { auth, db } from './firebase';
 import { getDoc, doc, query, collection, where, getDocs, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import './CommonStyles.css';
+import Select from 'react-select';
 import { FaArrowDown, FaArrowUp } from 'react-icons/fa'; // Import arrow icons
 
 function DeveloperTimesheetEntry() {
@@ -9,8 +10,10 @@ function DeveloperTimesheetEntry() {
   const [hoursWorked, setHoursWorked] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
   const [approvedBy, setApprovedBy] = useState('');
+  // const [collaborators, setCollaborators] = useState([]);
   const [entries, setEntries] = useState([]);
-  const [sortOrder, setSortOrder] = useState('desc'); // 'desc' for latest to oldest, 'asc' for oldest to latest
+  const [developerOptions, setDeveloperOptions] = useState([]);
+  const [sortOrder, setSortOrder] = useState('desc');
 
   const [userDetails, setUserDetails] = useState(null);
   const [userUid, setUserUid] = useState(null);
@@ -26,10 +29,22 @@ function DeveloperTimesheetEntry() {
           const userData = userDoc.data();
           setUserDetails(userData);
           loadEntries(user.uid, userData.role);
+          // loadDevelopers(userData.role, user.uid);
         }
       }
     });
   }, []);
+
+  // const loadDevelopers = async (role, currentUid) => {
+  //   const devsRef = collection(db, "Users");
+  //   const q = query(devsRef, where("role", "==", role), where("uid", "not-in", [currentUid]));
+  //   const querySnapshot = await getDocs(q);
+  //   const options = querySnapshot.docs.map(doc => ({
+  //     value: doc.id,
+  //     label: doc.data().name
+  //   }));
+  //   setDeveloperOptions(options);
+  // };  
 
   const loadEntries = async (uid, role) => {
     const entriesRef = collection(db, `Users/${role}/Entries`);
@@ -49,6 +64,7 @@ function DeveloperTimesheetEntry() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const currentDate = new Date();
     const entryData = {
       userId: userUid,
@@ -59,6 +75,9 @@ function DeveloperTimesheetEntry() {
       approvedBy,
       developerName: userDetails.name  // Assuming 'name' is part of 'userDetails'
     };
+
+    // Include collaborators
+    // entryData.collaborators = collaborators.map(option => option.label);
   
     // Reference to the developer's entries collection
     const developerEntriesRef = collection(db, `Users/${userDetails.role}/Entries`);
@@ -86,6 +105,10 @@ function DeveloperTimesheetEntry() {
       console.error("Error adding document: ", error);
     }
   };    
+
+  // const handleSelectChange = (selectedOptions) => {
+  //   setCollaborators(selectedOptions || []);
+  // };
 
   const resetFormFields = () => {
     setDate('');
@@ -178,6 +201,18 @@ function DeveloperTimesheetEntry() {
                   <label htmlFor="approvedBy">Approved By:</label>
                   <input type="text" id="approvedBy" value={approvedBy} onChange={e => setApprovedBy(e.target.value)} required />
                 </div>
+                {/* <div className="form-group">
+                  <label htmlFor="collaborators">Collaborators:</label>
+                  <Select
+                    id="collaborators"
+                    isMulti
+                    options={developerOptions}
+                    className="basic-multi-select"
+                    classNamePrefix="select"
+                    onChange={handleSelectChange}
+                    value={collaborators}
+                  />
+                </div> */}
               </div>
               <div className="submit-container">
                 <button type="submit" className="submit-button button">Submit</button>
@@ -198,6 +233,7 @@ function DeveloperTimesheetEntry() {
               <th>Time</th>
               <th>Hours Worked</th>
               <th>Task Description</th>
+              {/* <th>Collaborators</th> Add header for new column */}
               <th>Approved By</th>
               <th>Actions</th>
             </tr>
@@ -209,6 +245,7 @@ function DeveloperTimesheetEntry() {
                 <td>{entry.time}</td>
                 <td>{editIndex === index ? <input type="number" value={hoursWorked} onChange={e => setHoursWorked(e.target.value)} /> : entry.hoursWorked}</td>
                 <td>{editIndex === index ? <input type="text" value={taskDescription} onChange={e => setTaskDescription(e.target.value)} /> : entry.taskDescription}</td>
+                {/* <td>{entry.collaborators ? entry.collaborators.join(", ") : "No Collaborators"}</td> */}
                 <td>{editIndex === index ? <input type="text" value={approvedBy} onChange={e => setApprovedBy(e.target.value)} /> : entry.approvedBy}</td>
                 <td>
                   {editIndex === index ? (
