@@ -31,13 +31,16 @@ function AdminTimesheetEntry() {
     });
   }, []);
 
-  const loadEntries = async (uid, role) => {
-    const entriesRef = collection(db, `Users/${role}/Entries`);
-    const q = query(entriesRef, where("userId", "==", uid));
+  const loadEntries = async () => {
+    // Path to the 'Entries' subcollection under the 'admin' document
+    const entriesRef = collection(db, "Users/admin/Entries");
+    const q = query(entriesRef);
     const querySnapshot = await getDocs(q);
-    const loadedEntries = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setEntries(loadedEntries.sort(sortEntries));
-  };
+    const loadedEntries = querySnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .sort(sortEntries); // Sort entries by date and time
+    setEntries(loadedEntries);
+  };  
 
   const handleLogout = async () => {
     await auth.signOut();
@@ -188,44 +191,32 @@ function AdminTimesheetEntry() {
         )}
       </div>
       <div className="bottom-section full-screen">
-        <table className="timesheet-table">
-          <thead>
-            <tr>
-              <th onClick={toggleSortOrder} style={{ cursor: 'pointer' }}>
-                Date {sortOrder === 'desc' ? <FaArrowDown /> : <FaArrowUp />}
-              </th>
-              <th>Time</th>
-              <th>Hours Worked</th>
-              <th>Task Description</th>
-              <th>Approved By</th>
-              <th>Actions</th>
+      <table className="timesheet-table">
+        <thead>
+          <tr>
+            <th onClick={toggleSortOrder} style={{ cursor: 'pointer' }}>
+              Date {sortOrder === 'desc' ? <FaArrowDown /> : <FaArrowUp />}
+            </th>
+            <th>Time</th>
+            <th>Hours Worked</th>
+            <th>Task Description</th>
+            <th>Approved By</th>
+            <th>Developer</th> {/* Assuming you store developer name */}
+          </tr>
+        </thead>
+        <tbody>
+          {entries.map((entry) => (
+            <tr key={entry.id}>
+              <td>{entry.date}</td>
+              <td>{entry.time}</td>
+              <td>{entry.hoursWorked}</td>
+              <td>{entry.taskDescription}</td>
+              <td>{entry.approvedBy}</td>
+              <td>{entry.developerName || 'Unknown'}</td> {/* Handle missing names */}
             </tr>
-          </thead>
-          <tbody>
-            {entries.map((entry, index) => (
-              <tr key={entry.id}>
-                <td>{entry.date}</td>
-                <td>{entry.time}</td>
-                <td>{editIndex === index ? <input type="number" value={hoursWorked} onChange={e => setHoursWorked(e.target.value)} /> : entry.hoursWorked}</td>
-                <td>{editIndex === index ? <input type="text" value={taskDescription} onChange={e => setTaskDescription(e.target.value)} /> : entry.taskDescription}</td>
-                <td>{editIndex === index ? <input type="text" value={approvedBy} onChange={e => setApprovedBy(e.target.value)} /> : entry.approvedBy}</td>
-                <td>
-                  {editIndex === index ? (
-                    <>
-                      <button className="button save-button" onClick={() => handleSave(index)}>Save</button>
-                      <button className="button cancel-button" onClick={handleCancel}>Cancel</button>
-                    </>
-                  ) : (
-                    <>
-                      <button className="button edit-button" onClick={() => handleEdit(index)}>Edit</button>
-                      <button className="button delete-button" onClick={() => handleDelete(entry.id)}>Delete</button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+          ))}
+        </tbody>
+      </table>
       </div>
     </>
   );

@@ -29,7 +29,7 @@ body {
 }
 
 .right-section {
-  background-color: rgb(177, 23, 23);
+  background-color: #c63f3f;
   color: black;
 }
 
@@ -73,7 +73,7 @@ body {
 }
 
 .login-button {
-  background-color: rgb(177, 23, 23);
+  background-color: #c63f3f;
   color: rgb(216, 210, 210);
 }
 
@@ -120,10 +120,20 @@ body {
 
 .form-group input,
 .form-group select {
-  padding: 10px;
+  padding: 12px 15px; /* Increased padding for a better touch area and visual balance */
   margin-top: 5px;
-  border: none;
-  border-radius: 5px;
+  border: 2px solid #ddd; /* Subtle border */
+  border-radius: 8px; /* Slightly larger radius for a softer look */
+  outline: none; /* Removes the default focus outline */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Soft shadow for depth */
+  transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for interactive elements */
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #c63f3f; /* Highlight color when the input is focused */
+  box-shadow: 0 0 8px rgba(198,63,63,0.2); /* Soft glow effect upon focus */
 }
 
 .sub_button {

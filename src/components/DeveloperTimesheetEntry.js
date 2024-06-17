@@ -35,9 +35,12 @@ function DeveloperTimesheetEntry() {
     const entriesRef = collection(db, `Users/${role}/Entries`);
     const q = query(entriesRef, where("userId", "==", uid));
     const querySnapshot = await getDocs(q);
-    const loadedEntries = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setEntries(loadedEntries.sort(sortEntries));
+    const loadedEntries = querySnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .sort(sortEntries); // Make sure entries are sorted right after fetching
+    setEntries(loadedEntries);
   };
+  
 
   const handleLogout = async () => {
     await auth.signOut();
@@ -53,27 +56,26 @@ function DeveloperTimesheetEntry() {
       time: currentDate.toLocaleTimeString(),
       hoursWorked,
       taskDescription,
-      approvedBy
+      approvedBy,
+      developerName: userDetails.name  // Assuming 'name' is part of 'userDetails'
     };
   
     // Reference to the developer's entries collection
     const developerEntriesRef = collection(db, `Users/${userDetails.role}/Entries`);
-  
     // Reference to the admin's entries collection
-    // Assuming 'adminId' is known and is static, replace 'yourAdminId' with actual admin's UID
-    const adminEntriesRef = collection(db, `Users/admin/Entries`);
+    const adminEntriesRef = collection(db, "Users/admin/Entries");
   
     try {
       // Add to developer's entries
       const devDocRef = await addDoc(developerEntriesRef, entryData);
-      // Optionally, add to admin's entries
+      // Add to admin's entries
       const adminDocRef = await addDoc(adminEntriesRef, {
         ...entryData,
         developerId: userUid,  // Include developer ID to track whose entry it is
-        developerName: userDetails.name  // Optionally include developer name for easier identification
+        developerName: userDetails.name  // Include developer name for easier identification
       });
   
-      // Update local state
+      // Update local state with new entry for immediate UI update
       setEntries(prevEntries => [
         { id: devDocRef.id, ...entryData },
         ...prevEntries
@@ -83,8 +85,7 @@ function DeveloperTimesheetEntry() {
     } catch (error) {
       console.error("Error adding document: ", error);
     }
-  };
-  
+  };    
 
   const resetFormFields = () => {
     setDate('');
@@ -141,13 +142,13 @@ function DeveloperTimesheetEntry() {
   const toggleSortOrder = () => {
     setSortOrder(prevOrder => prevOrder === 'desc' ? 'asc' : 'desc');
     setEntries(prevEntries => [...prevEntries].sort(sortEntries));
-  };
+  };  
 
   const sortEntries = (a, b) => {
     const dateA = new Date(a.date + "T" + a.time);
     const dateB = new Date(b.date + "T" + b.time);
     return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
-  };
+  };  
 
   return (
     <>
