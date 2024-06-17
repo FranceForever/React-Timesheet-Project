@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from './firebase';
-import { getDoc, doc, query, collection, where, getDocs, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { getDoc, doc, query, collection, getDocs, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import './CommonStyles.css';
 import { FaArrowDown, FaArrowUp } from 'react-icons/fa'; // Import arrow icons
 
