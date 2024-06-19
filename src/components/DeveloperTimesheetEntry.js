@@ -175,6 +175,9 @@ function DeveloperTimesheetEntry() {
 
   return (
     <>
+      <div className="navbar">
+        <img src="/hdfcergo_logo.jpeg" alt="Logo" className="logo" />
+      </div>
       <div className="top-section full-screen">
         {userDetails ? (
           <>

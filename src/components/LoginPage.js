@@ -5,6 +5,14 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'fire
 import { auth, db } from './firebase';
 import { setDoc, doc, getDoc } from 'firebase/firestore';
 
+function typeWriter(element) {
+  const textArray = element.innerHTML.split("");
+  element.innerHTML = "";
+  textArray.forEach((letter, i) => {
+      setTimeout(() => (element.innerHTML += letter), 110 * i);
+  });
+}
+
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -18,6 +26,19 @@ function LoginPage() {
 
   useEffect(() => {
     document.body.classList.add('fade-in');
+    const interval = setInterval(() => {
+      const loginButton = document.querySelector(".login-button");
+      if (loginButton) {
+        typeWriter(loginButton);
+        clearInterval(interval);
+      }
+      const registerButton = document.querySelector(".register-button");
+      if (registerButton) {
+        typeWriter(registerButton);
+        clearInterval(interval);
+      }
+    }, 100);
+    return () => clearInterval(interval);
   }, []);
 
   const handleNext = (e) => {
@@ -95,64 +116,61 @@ function LoginPage() {
         {stage === 4 ? (
           <div className="form-container">
             <form className="form" onSubmit={handleRegister}>
-              <div className="form-group">
-                <label htmlFor="register-name">Name:</label>
-                <input
-                  type="text"
-                  id="register-name"
-                  value={registerName}
-                  onChange={(e) => setRegisterName(e.target.value)}
-                  required
-                />
+              <div className="grid-form">
+                <div className="form-group">
+                  <label htmlFor="register-name">Name:</label>
+                  <input
+                    type="text"
+                    id="register-name"
+                    value={registerName}
+                    onChange={(e) => setRegisterName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="register-email">Email:</label>
+                  <input
+                    type="email"
+                    id="register-email"
+                    value={registerEmail}
+                    onChange={(e) => setRegisterEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="register-phone">Phone:</label>
+                  <input
+                    type="text"
+                    id="register-phone"
+                    value={registerPhone}
+                    onChange={(e) => setRegisterPhone(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="register-password">Password:</label>
+                  <input
+                    type="password"
+                    id="register-password"
+                    value={registerPassword}
+                    onChange={(e) => setRegisterPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="register-role">Role:</label>
+                  <select id="register-role" value={registerRole} onChange={(e) => setRegisterRole(e.target.value)}>
+                    <option value="admin">Admin</option>
+                    <option value="developer">Developer</option>
+                  </select>
+                </div>
               </div>
-              <div className="form-group">
-                <label htmlFor="register-email">Email:</label>
-                <input
-                  type="email"
-                  id="register-email"
-                  value={registerEmail}
-                  onChange={(e) => setRegisterEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="register-phone">Phone:</label>
-                <input
-                  type="text"
-                  id="register-phone"
-                  value={registerPhone}
-                  onChange={(e) => setRegisterPhone(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="register-password">Password:</label>
-                <input
-                  type="password"
-                  id="register-password"
-                  value={registerPassword}
-                  onChange={(e) => setRegisterPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="register-role">Role:</label>
-                <select id="register-role" value={registerRole} onChange={(e) => setRegisterRole(e.target.value)}>
-                  <option value="admin">Admin</option>
-                  <option value="developer">Developer</option>
-                </select>
-              </div>
-              <button className="sub_button" type="submit">Register</button>
+              <button className="register_button" type="submit">Register</button>
             </form>
           </div>
         ) : (
           <div className={`image-container ${stage === 1 || stage === 2 ? 'centered' : 'initial-centered'}`}>
-            <img src="/loginImage.png" alt="Login" className="section-image" />
-            {stage === 0 && (
-              <button className="action-button login-button" onClick={handleLoginClick}>
-                Login
-              </button>
-            )}
+            <img src="/hdfcergo_logo.jpeg" alt="Login" className="section-image" />
           </div>
         )}
       </div>
@@ -161,9 +179,14 @@ function LoginPage() {
           <div className="image-container initial-centered">
             <img src="/loginImage.png" alt="Register" className="section-image" />
             {stage !== 4 && (
-              <button className="action-button register-button" onClick={handleRegisterClick}>
-                Register
-              </button>
+              <div>
+                <button className="action-button login-button" onClick={handleLoginClick}>
+                  Login
+                </button>
+                <button className="action-button register-button" onClick={handleRegisterClick}>
+                  Register
+                </button>
+              </div>
             )}
           </div>
         )}
@@ -196,14 +219,14 @@ function LoginPage() {
                     required
                   />
                 </div>
-                <button className="sub_button" type="submit">Login</button>
+                <button className="login_button" type="submit">Login</button>
               </form>
             )}
           </div>
         )}
       </div>
     </div>
-  );
+  );  
 }
 
 export default LoginPage;

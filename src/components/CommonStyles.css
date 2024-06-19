@@ -4,6 +4,22 @@ body {
     background-color: #f2f2f2;
     color: #495057;
   }
+
+  .navbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100wh;
+    height: 70px;
+    background-color: #E21F25;; /* Or any color that fits your design */
+  }
+  
+  .logo {
+    top: 10px; /* Adjust as necessary */
+    left: 10px;
+    height: 50px; /* Adjust based on your logo */
+    width: auto;
+  }
   
   h1 {
     color: #c63f3f;
@@ -157,7 +173,7 @@ body {
     /* background-color: #d8d2d2; */
     border-bottom: 1px solid black;
   }
-  
+
   .bottom-section {
     width: 100wh;
     padding: 20px;
@@ -167,13 +183,13 @@ body {
   
   .grid-form {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     flex-wrap: wrap;
     gap: 20px; /* Adjust this value to change the spacing between input fields */
   }
   
   .form-group {
-    flex: 1;
+    flex: 1 1 200px;
     min-width: 200px; /* Ensure fields don't get too narrow */
   }
   
