@@ -1,5 +1,6 @@
 body {
     margin: 0;
+    width: 100%;
     font-family: 'Segoe UI', Arial, sans-serif;
     background-color: #f2f2f2;
     color: #495057;
@@ -8,10 +9,11 @@ body {
   .navbar {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 100wh;
-    height: 70px;
-    background-color: #E21F25;; /* Or any color that fits your design */
+    justify-content: space-between; /* Aligns items from end to end */
+    width: 100wh; /* Ensures the navbar spans the full width */
+    height: 70px; /* Sets a fixed height for the navbar */
+    background-color: #E21F25; /* Adjust color as necessary */
+    padding: 0 20px; /* Adds horizontal padding */
   }
   
   .logo {
@@ -22,7 +24,7 @@ body {
   }
   
   h1 {
-    color: #c63f3f;
+    color: #E21F25;
     font-weight: bold;
   }
   
@@ -65,7 +67,6 @@ body {
     border: 2px solid #ccc;
     border-radius: 4px;
     box-sizing: border-box;
-    margin-top: 3px;
     margin-bottom: 16px;
   }
   
@@ -92,7 +93,7 @@ body {
   }
   
   .timesheet-table th {
-    background-color: #c63f3f;
+    background-color: #E21F25;
     color: white;
     font-size: 16px;
     cursor: pointer;
@@ -108,15 +109,34 @@ body {
   
   .logout-button {
     padding: 12px 24px;
-    background-color: #c63f3f;
+    background-color: white;
+    color: black;
+    font-weight: bold;
     border: none;
     border-radius: 5px;
     font-size: 16px;
     cursor: pointer;
+    position: absolute;
+    right: 10px;
   }
-  
+
   .logout-button:hover {
     background-color: #871515;
+  }
+  
+  .filter-section {
+    background-color: #f0f0f0; /* Light grey background */
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+  }
+
+  .filter-heading {
+    font-size: 24px;  /* Setting the font size larger than usual text */
+    font-weight: bold;  /* Making the text bold */
+    color: #005792;  /* Dark grey color for better readability */
+    margin-bottom: 10px;  /* Space below the heading */
+    padding-left: 5px;  /* Padding to align with the inputs */
   }
   
   .header {
@@ -146,7 +166,6 @@ body {
   }
   
   .form-group input, .form-group select {
-    width: 100%;
     padding: 12px 20px;
     border: 2px solid #bfc9d9;
     border-radius: 8px;
@@ -245,3 +264,232 @@ body {
   .delete-button:hover {
     background-color: #c82333;
   }  
+
+  .export-button {
+    background-color: #005792; /* Green background for export button */
+  }
+
+  @media (max-width: 768px) {
+    .timesheet-table, .timesheet-form{
+      width: 100wh;
+      overflow-x: auto; /* Allows table to scroll horizontally on small screens */
+    }
+  
+    .timesheet-table th, .timesheet-table td {
+      padding: 0px; /* Smaller padding for smaller screens */
+      font-size: 12px; /* Smaller font size for table headers and cells on small screens */
+    }
+  
+    .button, .submit-button, .edit-button, .save-button, .cancel-button, .delete-button {
+      padding: 8px 6px; /* Smaller buttons on smaller screens */
+      font-size: 12px; /* Smaller font size for better fit */
+    }
+  }
+
+  /* Additional Media Query for Very Small Screens */
+@media (max-width: 480px) {
+  .top-section {
+    width: 100wh;
+  }
+
+  .timesheet-table {
+    width: 100%;
+    overflow-x: auto; /* Ensures table is scrollable horizontally on very small screens */
+  }
+
+  .form-group input, .form-group select {
+    font-size: 14px; /* Smaller input and select font size for very small screens */
+  }
+
+  .navbar {
+    padding: 5px;
+  }
+
+  .button, .submit-button, .edit-button, .save-button, .cancel-button, .delete-button {
+    padding: 6px 10px; /* Smaller padding for very small screens */
+    font-size: 12px; /* Smaller font size to fit the screen */
+  }
+}
+  
+  .bottom-section {
+    width: 100wh;
+    padding: 20px;
+    background-color: #bfbfbf;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .timesheet-table {
+    width: 100wh;
+    margin: auto;
+    border-collapse: collapse;
+    border: 2px solid #dee2e6;
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+  }
+  
+  .timesheet-table th, .timesheet-table td {
+    text-align: center;
+    padding: 12px;
+    border-bottom: 2px solid #dee2e6;
+    border: 1px solid black; /* Black border around each cell */
+  }
+  
+  .timesheet-table th {
+    background-color: #E21F25;
+    color: white;
+    font-size: 16px;
+  }
+  
+  .timesheet-table tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .timesheet-table tr:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .footer {
+    background-color: #E21F25; /* Matches the navbar */
+    color: white;
+    text-align: center;
+    padding: 20px;
+    bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .footer-logo {
+    height: 60px; /* Match your navbar logo size */
+    margin-bottom: 10px;
+  }
+  
+  .footer-content p {
+    color: white;
+    margin: 5px 0;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  
+  /* Ensure footer is at the bottom even on larger screens */
+  body, html {
+    height: 100%;
+    margin: 0;
+  }
+  
+  .main-content {
+    min-height: calc(100vh - 70px - 40px); /* Adjust based on navbar and footer height */
+  }  
+
+  body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background-color: #fafafa; /* Lighter background for a softer look */
+    color: #333; /* Soft black for text */
+  }
+  
+  .navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 60px; /* Slightly reduced height */
+    background-color: #E21F25; /* Changed to a calm blue */
+    color: white;
+  }
+  
+  .logo {
+    height: 40px;
+    width: auto;
+  }
+  
+  h1 {
+    color: #005792;
+    margin-bottom: 20px;
+  }
+  
+  .header, .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .timesheet-table {
+    width: 100%;
+    margin: 20px auto;
+    border-collapse: collapse;
+    background-color: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .timesheet-table th, .timesheet-table td {
+    padding: 12px;
+    border: 1px solid #ccc;
+  }
+  
+  .timesheet-table th {
+    background-color: #005792;
+    color: white;
+  }
+  
+  .timesheet-table tr:nth-child(odd) {
+    background-color: #f9f9f9; /* Zebra striping for rows */
+  }
+  
+  input[type="date"], input[type="number"], input[type="text"], select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  
+  input[type="date"]:focus, input[type="number"]:focus, input[type="text"]:focus, select:focus {
+    border-color: #4CAF50;
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+  }
+  
+  .footer {
+    background-color: #005792;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    width: 100%;
+  }
+  
+  .footer-logo {
+    height: 50px;
+  }
+  
+  .footer-content p {
+    margin: 5px 0;
+    font-size: 14px;
+  }
+  
+  @media (max-width: 768px) {
+    .button, .submit-button, .edit-button, .save-button, .cancel-button, .delete-button {
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+  
+    .timesheet-table, .timesheet-form {
+      width: 100%;
+      overflow-x: auto;
+    }
+  
+    .timesheet-table th, .timesheet-table td {
+      padding: 10px;
+      font-size: 14px;
+    }
+  
+    .grid-form {
+      gap: 10px;
+    }
+  
+    .form-group {
+      min-width: 150px;
+    }
+  }
+  

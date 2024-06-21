@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LoginPage.css'; // Import CSS file for styling
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
@@ -9,13 +9,15 @@ function typeWriter(element) {
   const textArray = element.innerHTML.split("");
   element.innerHTML = "";
   textArray.forEach((letter, i) => {
-      setTimeout(() => (element.innerHTML += letter), 110 * i);
+      setTimeout(() => (element.innerHTML += letter), 100 * i);
   });
 }
 
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState({});
+  const [successMessage, setSuccessMessage] = useState('');
   const [registerName, setRegisterName] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPhone, setRegisterPhone] = useState('');
@@ -23,6 +25,9 @@ function LoginPage() {
   const [registerRole, setRegisterRole] = useState('developer');
   const [stage, setStage] = useState(0); // 0: Initial, 1: Login, 2: Password, 3: Expand Login, 4: Register
   const navigate = useNavigate();
+
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
 
   useEffect(() => {
     document.body.classList.add('fade-in');
@@ -41,30 +46,92 @@ function LoginPage() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const loginTime = parseInt(localStorage.getItem('loginTime'), 10);
+    
+    if (isLoggedIn && Date.now() - loginTime < 1800000) { // 1800000 milliseconds = 30 minutes
+      const user = auth.currentUser;
+      if (user) {
+        navigateBasedOnRole(user.role); // Implement a way to get the role or save the role in local storage as well
+      }
+    } else {
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('loginTime');
+    }
+  }, [navigate]);
+
+  const validateLogin = () => {
+    let isValid = true;
+    let errors = {};
+
+    if (!username || !password) {
+      errors.login = "Email and password are required.";
+      isValid = false;
+    }
+
+    setErrors(errors);
+    return isValid;
+  };
+
+  const validateForm = () => {
+    let isValid = true;
+    let errors = {};
+
+    if (/[^a-zA-Z ]/.test(registerName)) {
+      errors.name = "Name must only contain letters and spaces.";
+      isValid = false;
+    }
+
+    if (registerPhone.length !== 10) {
+      errors.phone = "Phone number must be 10 digits.";
+      isValid = false;
+    }
+
+    if (registerPassword.length < 6) {
+      errors.password = "Password must be at least 6 characters long.";
+      isValid = false;
+    }
+
+    setErrors(errors);
+    return isValid;
+  };
+
   const handleNext = (e) => {
     e.preventDefault();
     setStage(2);
-  };
+    setTimeout(() => {
+      passwordRef.current.focus();
+    }, 0); // Timeout ensures that the focus call is enqueued after DOM updates
+  };  
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
+    if (!validateLogin()) {
+      alert(errors.login); // Display the validation error
+      return; // Stop the login if validation fails
+    }
+  
     try {
       const userCredential = await signInWithEmailAndPassword(auth, username, password);
-      const user = userCredential.user;
-      const userRef = doc(db, "Users", user.uid);
+      const userRef = doc(db, "Users", userCredential.user.uid);
       const docSnap = await getDoc(userRef);
-
+  
+      localStorage.setItem('loginTime', Date.now());
+      localStorage.setItem('isLoggedIn', 'true');
+  
       if (docSnap.exists()) {
         const userData = docSnap.data();
         navigateBasedOnRole(userData.role);
+        alert('Login successful!'); // Notify user of successful login
       } else {
-        console.error("No such user exists!");
+        alert('Failed to retrieve user data.');
       }
     } catch (error) {
-      console.error('Error during login:', error);
+      // alert(error.message); // Display firebase error message using alert
+      alert('Incorrect email/password. Please try again.');
     }
-  };
+  };  
 
   const navigateBasedOnRole = (role) => {
     if (role === 'admin') {
@@ -78,29 +145,33 @@ function LoginPage() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-
+    if (!validateForm()) {
+      // Construct a string from all errors and display them in an alert
+      // alert(Object.values(errors).join('\n'));
+      alert('Registration Unsuccessful !');
+      return; // Stop the registration if the form is invalid
+    }
+  
     try {
-      await createUserWithEmailAndPassword(auth,registerEmail,registerPassword);
-      const user = auth.currentUser;
-      console.log(user);
-
-      if(user){
-        await setDoc(doc(db, "Users", user.uid), {
-          email: user.email,
-          name: registerName,
-          phone: registerPhone,
-          role: registerRole
-        });
-        setStage(0);  // Reset the stage to the initial page
-        navigate('/');  // Optionally, use navigate to go to the root page or a specific path
-      }
-      console.log("User registered successfully!");
+      const userCredential = await createUserWithEmailAndPassword(auth, registerEmail, registerPassword);
+      await setDoc(doc(db, "Users", userCredential.user.uid), {
+        name: registerName,
+        email: registerEmail,
+        phone: registerPhone,
+        role: registerRole
+      });
+  
+      alert('Registration successful!'); // Notify user of successful registration
       navigate('/login');
     } catch (error) {
-      console.error('Error during registration:', error);
-      console.log(error.message);
+      if (error.code === "auth/email-already-in-use") {
+        alert('User already exists!'); // Specific alert for duplicate email
+      } else {
+        alert(error.message); // Display firebase error message using alert for other errors
+      }
     }
   };
+  
 
   const handleLoginClick = () => {
     setStage(1);
@@ -116,56 +187,62 @@ function LoginPage() {
         {stage === 4 ? (
           <div className="form-container">
             <form className="form" onSubmit={handleRegister}>
-              <div className="grid-form">
+            {/* {error && <p className="error">{error}</p>} */}
                 <div className="form-group">
-                  <label htmlFor="register-name">Name:</label>
+                  <label id="register-label" htmlFor="register-name">Name:</label>
                   <input
                     type="text"
                     id="register-name"
                     value={registerName}
-                    onChange={(e) => setRegisterName(e.target.value)}
+                    onChange={e => setRegisterName(e.target.value)}
                     required
                   />
+                  {errors.name && <p className="error">{errors.name}</p>}
                 </div>
                 <div className="form-group">
-                  <label htmlFor="register-email">Email:</label>
+                  <label id="register-label" htmlFor="register-email">Email:</label>
                   <input
                     type="email"
                     id="register-email"
                     value={registerEmail}
-                    onChange={(e) => setRegisterEmail(e.target.value)}
+                    onChange={e => setRegisterEmail(e.target.value)}
                     required
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="register-phone">Phone:</label>
+                  <label id="register-label" htmlFor="register-phone">Phone:</label>
                   <input
                     type="text"
                     id="register-phone"
                     value={registerPhone}
-                    onChange={(e) => setRegisterPhone(e.target.value)}
+                    onChange={e => setRegisterPhone(e.target.value)}
+                    maxLength={10}
+                    pattern="\d*"
                     required
                   />
+                  {errors.phone && <p className="error">{errors.phone}</p>}
                 </div>
                 <div className="form-group">
-                  <label htmlFor="register-password">Password:</label>
+                  <label id="register-label" htmlFor="register-password">Password:</label>
                   <input
                     type="password"
                     id="register-password"
                     value={registerPassword}
-                    onChange={(e) => setRegisterPassword(e.target.value)}
+                    onChange={e => setRegisterPassword(e.target.value)}
+                    minLength={6}
                     required
                   />
+                  {errors.password && <p className="error">{errors.password}</p>}
                 </div>
                 <div className="form-group">
-                  <label htmlFor="register-role">Role:</label>
+                  <label id="register-label" htmlFor="register-role">Role:</label>
                   <select id="register-role" value={registerRole} onChange={(e) => setRegisterRole(e.target.value)}>
                     <option value="admin">Admin</option>
                     <option value="developer">Developer</option>
                   </select>
                 </div>
-              </div>
               <button className="register_button" type="submit">Register</button>
+              {errors.firebase && <p className="error">{errors.firebase}</p>}
             </form>
           </div>
         ) : (
@@ -191,16 +268,20 @@ function LoginPage() {
           </div>
         )}
         {(stage === 1 || stage === 2) && (
-          <div className="form-container">
+          <div className="form-container-login">
+            {successMessage && <div className="success-message">{successMessage}</div>}
             {stage === 1 && (
               <form className="form" onSubmit={handleNext}>
+                {/* {error && <p className="error">{error}</p>} */}
+                {errors.login && <p className="error">{errors.login}</p>}
                 <div className="form-group">
-                  <label htmlFor="username">Username/Email:</label>
+                  <label htmlFor="username">Email:</label>
                   <input
-                    type="text"
+                    type="email"
                     id="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
+                    ref={emailRef}
                     required
                   />
                 </div>
@@ -209,6 +290,7 @@ function LoginPage() {
             )}
             {stage === 2 && (
               <form className="form" onSubmit={handleLogin}>
+                 {errors.login && <p className="error">{errors.login}</p>}
                 <div className="form-group">
                   <label htmlFor="password">Password:</label>
                   <input
@@ -216,6 +298,7 @@ function LoginPage() {
                     id="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    ref={passwordRef}
                     required
                   />
                 </div>

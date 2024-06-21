@@ -22,7 +22,6 @@ body {
   width: auto;
 }
 
-
 @keyframes gradientBG {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -142,14 +141,17 @@ body {
 }
 
 .login_button {
+  display: flex;
   padding: 15px 30px;
   margin: 20px 0;
+  margin-left: 20px;
+  justify-content: center;
   border: none;
   border-radius: 5px;
   font-size: 18px;
   font-weight: bold;
   cursor: pointer;
-  width: 80%;
+  width: 70%;
   max-width: 300px;
   transition: all 0.3s ease-in-out;
   background-color: #E21F25;
@@ -157,13 +159,16 @@ body {
 }
 
 .login_button:hover {
-  background-color: rgb(176, 173, 173);
-  color: black;
+  background-color: #ad0f0f;
+  color: white;
 }
 
 .register_button {
+  align-items: center;
+  justify-content: center;
   padding: 15px 30px;
   margin: 20px 0;
+  margin-left: 20px;
   border: none;
   border-radius: 5px;
   font-size: 18px;
@@ -177,8 +182,8 @@ body {
 }
 
 .register_button:hover {
-  background-color: #a93030;
-  color: rgb(216, 210, 210);
+  background-color: #bdbdbd;
+  color: black;
 }
 
 /* .action-button:hover, .sub_button:hover {
@@ -190,7 +195,6 @@ form {
   transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
   align-items: center;
   justify-content: center;
-  margin-left: 130px;
 }
 
 form.submitting {
@@ -211,6 +215,15 @@ form.submitting {
   height: 100%;
 }
 
+.form-container-login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  margin-left: 140px;
+}
+
 .form-group {
   margin: 30px 0;
   width: 100%;
@@ -226,6 +239,23 @@ form.submitting {
   font-family: 'Arial', sans-serif;
   display: block; /* Ensures labels take full width of the form-group, confined within the timesheet-container */
   margin-bottom: 5px; /* Adds space below the label */
+  color: white; /* Ensures labels are readable against the dark background */
+  background-color: transparent; /* Keeps the background consistent with the container */
+}
+
+.success-message {
+  color: green;
+  text-align: center;
+  margin-top: 20px;
+  font-size: 16px;
+}
+
+#register-label {
+  font-weight: bold;
+  font-size: 20px;
+  font-family: 'Arial', sans-serif;
+  display: block; /* Ensures labels take full width of the form-group, confined within the timesheet-container */
+  margin-bottom: 10px; /* Adds space below the label */
   color: white; /* Ensures labels are readable against the dark background */
   background-color: transparent; /* Keeps the background consistent with the container */
 }
@@ -265,6 +295,8 @@ form.submitting {
 .sub_button {
   background-color: #E21F25;
   color: white;
+  width: 50%;
+  margin-left: 45px;
   padding: 10px 20px;
   border: none;
   border-radius: 5px;
@@ -278,7 +310,7 @@ form.submitting {
 
 .grid-form {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 2 columns for a better layout */
-  gap: 20px; /* Space between grid items */
-  width: 100%; /* Use full width of the form container */
+  grid-template-columns: 1fr; /* Single column layout */
+  gap: 20px; /* Spacing between fields */
+  width: 100%; /* Full width of the container */
 }

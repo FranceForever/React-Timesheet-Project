@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { auth, db } from './firebase';
 import { getDoc, doc, query, collection, where, getDocs, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import './CommonStyles.css';
-import Select from 'react-select';
 import { FaArrowDown, FaArrowUp } from 'react-icons/fa'; // Import arrow icons
 
 function DeveloperTimesheetEntry() {
@@ -10,9 +9,7 @@ function DeveloperTimesheetEntry() {
   const [hoursWorked, setHoursWorked] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
   const [approvedBy, setApprovedBy] = useState('');
-  // const [collaborators, setCollaborators] = useState([]);
   const [entries, setEntries] = useState([]);
-  const [developerOptions, setDeveloperOptions] = useState([]);
   const [sortOrder, setSortOrder] = useState('desc');
 
   const [userDetails, setUserDetails] = useState(null);
@@ -29,86 +26,100 @@ function DeveloperTimesheetEntry() {
           const userData = userDoc.data();
           setUserDetails(userData);
           loadEntries(user.uid, userData.role);
-          // loadDevelopers(userData.role, user.uid);
         }
       }
     });
   }, []);
 
-  // const loadDevelopers = async (role, currentUid) => {
-  //   const devsRef = collection(db, "Users");
-  //   const q = query(devsRef, where("role", "==", role), where("uid", "not-in", [currentUid]));
-  //   const querySnapshot = await getDocs(q);
-  //   const options = querySnapshot.docs.map(doc => ({
-  //     value: doc.id,
-  //     label: doc.data().name
-  //   }));
-  //   setDeveloperOptions(options);
-  // };  
-
   const loadEntries = async (uid, role) => {
     const entriesRef = collection(db, `Users/${role}/Entries`);
     const q = query(entriesRef, where("userId", "==", uid));
     const querySnapshot = await getDocs(q);
-    const loadedEntries = querySnapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .sort(sortEntries); // Make sure entries are sorted right after fetching
+    const loadedEntries = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     setEntries(loadedEntries);
   };
-  
+
+  const sortedEntries = useMemo(() => {
+    return entries.sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    });
+  }, [entries, sortOrder]);
+
+  const toggleSortOrder = () => {
+    setSortOrder(prevOrder => prevOrder === 'desc' ? 'asc' : 'desc');
+  };
+
+  const validateEntry = () => {
+    // Validate all required fields are filled
+    if (!date || !hoursWorked || !taskDescription || !approvedBy) {
+        alert("All fields must be filled out.");
+        return false; // Return false to indicate invalid inputs
+    }
+    // Validate hours worked is within a reasonable range
+    if (hoursWorked < 0 || hoursWorked > 100) {
+        alert("Hours Worked must be between 0 and 100.");
+        return false; // Return false to indicate invalid inputs
+    }
+    return true; // Return true to indicate valid inputs
+};
+
+const formatDate = (dateString) => {
+  const dateObj = new Date(dateString);
+  const formattedDate = dateObj.toLocaleDateString('en-GB');
+  return formattedDate;
+};
 
   const handleLogout = async () => {
     await auth.signOut();
     window.location.href = "/login";
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const entrySorter = (a, b) => {
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+};
 
-    const currentDate = new Date();
-    const entryData = {
-      userId: userUid,
-      date: currentDate.toLocaleDateString(),
-      time: currentDate.toLocaleTimeString(),
-      hoursWorked,
-      taskDescription,
-      approvedBy,
-      developerName: userDetails.name  // Assuming 'name' is part of 'userDetails'
-    };
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    // Include collaborators
-    // entryData.collaborators = collaborators.map(option => option.label);
-  
-    // Reference to the developer's entries collection
-    const developerEntriesRef = collection(db, `Users/${userDetails.role}/Entries`);
-    // Reference to the admin's entries collection
-    const adminEntriesRef = collection(db, "Users/admin/Entries");
-  
-    try {
-      // Add to developer's entries
-      const devDocRef = await addDoc(developerEntriesRef, entryData);
-      // Add to admin's entries
-      const adminDocRef = await addDoc(adminEntriesRef, {
-        ...entryData,
-        developerId: userUid,  // Include developer ID to track whose entry it is
-        developerName: userDetails.name  // Include developer name for easier identification
-      });
-  
-      // Update local state with new entry for immediate UI update
-      setEntries(prevEntries => [
-        { id: devDocRef.id, ...entryData },
-        ...prevEntries
-      ].sort(sortEntries));
-  
-      resetFormFields();
-    } catch (error) {
-      console.error("Error adding document: ", error);
-    }
-  };    
+  if (!validateEntry()) return;
 
-  // const handleSelectChange = (selectedOptions) => {
-  //   setCollaborators(selectedOptions || []);
-  // };
+  const entryData = {
+    userId: userUid,
+    date: date,
+    time: new Date().toLocaleTimeString(),
+    hoursWorked,
+    taskDescription,
+    approvedBy,
+    developerName: userDetails.name,
+    creationDate: new Date().toLocaleDateString('en-GB') // Store the local machine's current date
+  };
+
+  const developerEntriesRef = collection(db, `Users/${userDetails.role}/Entries`);
+  const adminEntriesRef = collection(db, "Users/admin/Entries");
+
+  try {
+    const devDocRef = await addDoc(developerEntriesRef, entryData);
+    await addDoc(adminEntriesRef, {
+      ...entryData,
+      developerId: userUid
+    });
+
+    setEntries(prevEntries => [
+      { id: devDocRef.id, ...entryData },
+      ...prevEntries
+    ].sort(entrySorter));    
+
+    resetFormFields();
+    alert("Entry added successfully!");
+  } catch (error) {
+    console.error("Error adding document: ", error);
+  }
+};
+
 
   const resetFormFields = () => {
     setDate('');
@@ -132,6 +143,7 @@ function DeveloperTimesheetEntry() {
         await deleteDoc(doc(db, `Users/${userDetails.role}/Entries`, id));
         loadEntries(userUid, userDetails.role);
         resetFormFields();
+        alert("Entry deleted successfully!");
       } catch (error) {
         console.error("Error deleting document: ", error);
       }
@@ -149,47 +161,40 @@ function DeveloperTimesheetEntry() {
     const entryRef = doc(db, `Users/${userDetails.role}/Entries`, entry.id);
     try {
       await updateDoc(entryRef, updatedData);
-      setEntries(prev => prev.map((el, i) => i === editIndex ? { ...el, ...updatedData } : el).sort(sortEntries));
+      // Update sorting directly using the entrySorter function
+      setEntries(prev => prev.map((el, i) => i === editIndex ? { ...el, ...updatedData } : el).sort(entrySorter));
       setEditIndex(-1);
       resetFormFields();
+      alert("Entry saved successfully!");
     } catch (error) {
       console.error("Error updating entry:", error);
     }
-  };
+};
+
 
   const handleCancel = () => {
     resetFormFields();
     setEditIndex(-1);
   };
 
-  const toggleSortOrder = () => {
-    setSortOrder(prevOrder => prevOrder === 'desc' ? 'asc' : 'desc');
-    setEntries(prevEntries => [...prevEntries].sort(sortEntries));
-  };  
-
-  const sortEntries = (a, b) => {
-    const dateA = new Date(a.date + "T" + a.time);
-    const dateB = new Date(b.date + "T" + b.time);
-    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
-  };  
 
   return (
     <>
       <div className="navbar">
         <img src="/hdfcergo_logo.jpeg" alt="Logo" className="logo" />
+        <button className="logout-button button" onClick={handleLogout}>Logout</button>
       </div>
       <div className="top-section full-screen">
         {userDetails ? (
           <>
             <div className="header">
               <p>Welcome {userDetails.name} | Role: {userDetails.role}</p>
-              <button className="logout-button button" onClick={handleLogout}>Logout</button>
             </div>
             <h1>Developer Timesheet Entry</h1>
             <form onSubmit={handleSubmit} className="timesheet-form">
               <div className="grid-form">
                 <div className="form-group">
-                  <label htmlFor="date">Date:</label>
+                  <label htmlFor="date">Date of Task:</label>
                   <input type="date" id="date" value={date} onChange={e => setDate(e.target.value)} required />
                 </div>
                 <div className="form-group">
@@ -204,18 +209,6 @@ function DeveloperTimesheetEntry() {
                   <label htmlFor="approvedBy">Approved By:</label>
                   <input type="text" id="approvedBy" value={approvedBy} onChange={e => setApprovedBy(e.target.value)} required />
                 </div>
-                {/* <div className="form-group">
-                  <label htmlFor="collaborators">Collaborators:</label>
-                  <Select
-                    id="collaborators"
-                    isMulti
-                    options={developerOptions}
-                    className="basic-multi-select"
-                    classNamePrefix="select"
-                    onChange={handleSelectChange}
-                    value={collaborators}
-                  />
-                </div> */}
               </div>
               <div className="submit-container">
                 <button type="submit" className="submit-button button">Add New Entry</button>
@@ -230,13 +223,13 @@ function DeveloperTimesheetEntry() {
         <table className="timesheet-table">
           <thead>
             <tr>
+              <th>Entry added on</th> {/* New column header */}
               <th onClick={toggleSortOrder} style={{ cursor: 'pointer' }}>
-                Date {sortOrder === 'desc' ? <FaArrowDown /> : <FaArrowUp />}
+                Date of Task {sortOrder === 'desc' ? <FaArrowDown /> : <FaArrowUp />}
               </th>
               <th>Time of Entry</th>
               <th>Hours Worked</th>
               <th>Task Description</th>
-              {/* <th>Collaborators</th> Add header for new column */}
               <th>Approved By</th>
               <th>Actions</th>
             </tr>
@@ -244,11 +237,11 @@ function DeveloperTimesheetEntry() {
           <tbody>
             {entries.map((entry, index) => (
               <tr key={entry.id}>
-                <td>{entry.date}</td>
+                <td>{entry.creationDate}</td> {/* Display the creation date */}
+                <td>{formatDate(entry.date)}</td> 
                 <td>{entry.time}</td>
                 <td>{editIndex === index ? <input type="number" value={hoursWorked} onChange={e => setHoursWorked(e.target.value)} /> : entry.hoursWorked}</td>
                 <td>{editIndex === index ? <input type="text" value={taskDescription} onChange={e => setTaskDescription(e.target.value)} /> : entry.taskDescription}</td>
-                {/* <td>{entry.collaborators ? entry.collaborators.join(", ") : "No Collaborators"}</td> */}
                 <td>{editIndex === index ? <input type="text" value={approvedBy} onChange={e => setApprovedBy(e.target.value)} /> : entry.approvedBy}</td>
                 <td>
                   {editIndex === index ? (
@@ -268,6 +261,14 @@ function DeveloperTimesheetEntry() {
           </tbody>
         </table>
       </div>
+      <footer className="footer">
+        <img src="hdfcergo_logo.jpeg" alt="Company Logo" className="footer-logo" />
+        <div className="footer-content">
+          <p>HDFC ERGO General Insurance Company Ltd.</p>
+          <p>1st Floor, HDFC House, Backbay Reclamation, H. T. Parekh Marg, Churchgate, Mumbai - 400020.</p>
+          <p><a href="mailto:contact@hdfcergo.com" style={{ color: 'inherit' }}>contact@hdfcergo.com</a></p>
+        </div>
+      </footer>
     </>
   );
 }

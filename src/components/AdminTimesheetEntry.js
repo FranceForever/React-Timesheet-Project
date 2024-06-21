@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { auth, db } from './firebase';
 import { getDoc, doc, query, collection, getDocs, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import './CommonStyles.css';
-import { FaArrowDown, FaArrowUp } from 'react-icons/fa'; // Import arrow icons
+import { FaArrowDown, FaArrowUp, FaCheck, FaTimes } from 'react-icons/fa'; // Import arrow icons
+import * as XLSX from 'xlsx';
 
 function AdminTimesheetEntry() {
   const [date, setDate] = useState('');
@@ -16,6 +17,56 @@ function AdminTimesheetEntry() {
   const [userUid, setUserUid] = useState(null);
 
   const [editIndex, setEditIndex] = useState(-1);
+
+  const handleApproval = async (entryId, status) => {
+    const adminEntryRef = doc(db, "Users/admin/Entries", entryId);
+    let updates = { status: status };
+
+    // If rejecting, prompt for a reason
+    if (status === 'Rejected') {
+      const reason = prompt("Enter the reason for rejection:");
+      updates.comments = reason; // Save rejection comments
+    }
+
+    try {
+      // Fetch the current admin entry to get the developer's entry ID
+      const adminEntryDoc = await getDoc(adminEntryRef);
+      if (!adminEntryDoc.exists()) {
+        console.error("Document does not exist!");
+        return;
+      }
+      const devEntryId = adminEntryDoc.data().devEntryId; // Assuming the developer's entry ID is stored like this
+
+      // Update the admin's entry
+      await updateDoc(adminEntryRef, updates);
+
+      // Update the developer's corresponding entry
+      if (devEntryId) {
+        const devEntryRef = doc(db, `Users/${userDetails.role}/Entries`, devEntryId);
+        await updateDoc(devEntryRef, updates);
+      }
+
+      loadEntries(); // Reload entries to reflect changes
+      alert(`Entry has been ${status.toLowerCase()}.`);
+    } catch (error) {
+      console.error("Error updating entry:", error);
+    }
+};
+
+
+  const handleExport = () => {
+    const ws = XLSX.utils.json_to_sheet(entries.map(entry => ({
+      Date: entry.date,
+      "Time of Entry": entry.time,
+      "Hours Worked": entry.hoursWorked,
+      "Task Description": entry.taskDescription,
+      "Approved By": entry.approvedBy,
+      Developer: entry.developerName || 'Unknown'
+    })));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "TimesheetEntries");
+    XLSX.writeFile(wb, "TimesheetEntries.xlsx");
+  };
 
   useEffect(() => {
     auth.onAuthStateChanged(async (user) => {
@@ -88,6 +139,34 @@ function AdminTimesheetEntry() {
     }
   };
   
+  const toggleSortOrder = () => {
+    setSortOrder(prevOrder => prevOrder === 'desc' ? 'asc' : 'desc');
+    setEntries(prevEntries => [...prevEntries].sort(sortEntries));
+  };
+
+  const sortEntries = (a, b) => {
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+  };
+
+  const [filter, setFilter] = useState({
+    date: '',
+    developerName: '',
+    approvedBy: ''
+  });
+  
+  const handleFilterChange = (key, value) => {
+    setFilter(prev => ({ ...prev, [key]: value }));
+  };
+  
+  const filteredEntries = useMemo(() => {
+    return entries.filter(entry => {
+      return (filter.date ? entry.date.includes(filter.date) : true) &&
+             (filter.developerName ? entry.developerName.toLowerCase().includes(filter.developerName.toLowerCase()) : true) &&
+             (filter.approvedBy ? entry.approvedBy.toLowerCase().includes(filter.approvedBy.toLowerCase()) : true);
+    }).sort(sortEntries);
+  }, [entries, filter, sortOrder]);  
 
   const resetFormFields = () => {
     setDate('');
@@ -117,107 +196,122 @@ function AdminTimesheetEntry() {
     }
   };
 
-  const handleSave = async () => {
-    const entry = entries[editIndex];
-    const updatedData = {
-      date,
-      hoursWorked,
-      taskDescription,
-      approvedBy,
-    };
-    const entryRef = doc(db, `Users/${userDetails.role}/Entries`, entry.id);
+  const handleSave = async (index) => {
+    const entry = entries[index];
+    const entryRef = doc(db, `Users/admin/Entries`, entry.id);
     try {
-      await updateDoc(entryRef, updatedData);
-      setEntries(prev => prev.map((el, i) => i === editIndex ? { ...el, ...updatedData } : el).sort(sortEntries));
+      await updateDoc(entryRef, entry);
+      setEntries(prev => prev.map((el, i) => i === index ? entry : el).sort(sortEntries));
       setEditIndex(-1);
-      resetFormFields();
+      alert("Entry updated successfully!");
     } catch (error) {
       console.error("Error updating entry:", error);
     }
   };
 
   const handleCancel = () => {
-    resetFormFields();
     setEditIndex(-1);
-  };
-
-  const toggleSortOrder = () => {
-    setSortOrder(prevOrder => prevOrder === 'desc' ? 'asc' : 'desc');
-    setEntries(prevEntries => [...prevEntries].sort(sortEntries));
-  };
-
-  const sortEntries = (a, b) => {
-    const dateA = new Date(a.date + "T" + a.time);
-    const dateB = new Date(b.date + "T" + b.time);
-    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
   };
 
   return (
     <>
+      <div className="navbar">
+        <img src="hdfcergo_logo.jpeg" alt="Logo" className="logo" />
+        <button className="logout-button button" onClick={handleLogout}>Logout</button>
+      </div>
       <div className="top-section full-screen">
         {userDetails ? (
           <>
             <div className="header">
               <p>Welcome {userDetails.name} | Role: {userDetails.role}</p>
-              <button className="logout-button button" onClick={handleLogout}>Logout</button>
+              <button className="button export-button" onClick={handleExport}>Export as Excel</button>
             </div>
             <h1>Admin Timesheet Entry</h1>
-            <form onSubmit={handleSubmit} className="timesheet-form">
-              <div className="grid-form">
-                <div className="form-group">
-                  <label htmlFor="date">Date:</label>
-                  <input type="date" id="date" value={date} onChange={e => setDate(e.target.value)} required />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="hoursWorked">Hours Worked:</label>
-                  <input type="number" id="hoursWorked" value={hoursWorked} onChange={e => setHoursWorked(e.target.value)} required />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="taskDescription">Task Description:</label>
-                  <input type="text" id="taskDescription" value={taskDescription} onChange={e => setTaskDescription(e.target.value)} required />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="approvedBy">Approved By:</label>
-                  <input type="text" id="approvedBy" value={approvedBy} onChange={e => setApprovedBy(e.target.value)} required />
-                </div>
-              </div>
-              <div className="submit-container">
-                <button type="submit" className="submit-button button">Submit</button>
-              </div>
-            </form>
+          <div className="filter-section">
+            <h3 className="filter-heading">Filter Entries:</h3>
+            <input
+              type="date"
+              value={filter.date}
+              onChange={(e) => handleFilterChange('date', e.target.value)}
+              placeholder="Filter by Date"
+            />
+            <input
+              type="text"
+              value={filter.developerName}
+              onChange={(e) => handleFilterChange('developerName', e.target.value)}
+              placeholder="Filter by Developer Name"
+            />
+            <input
+              type="text"
+              value={filter.approvedBy}
+              onChange={(e) => handleFilterChange('approvedBy', e.target.value)}
+              placeholder="Filter by Approved By"
+            />
+          </div>
           </>
         ) : (
           <p>Loading...</p>
         )}
       </div>
       <div className="bottom-section full-screen">
-      <table className="timesheet-table">
-        <thead>
-          <tr>
-            <th onClick={toggleSortOrder} style={{ cursor: 'pointer' }}>
-              Date {sortOrder === 'desc' ? <FaArrowDown /> : <FaArrowUp />}
-            </th>
-            <th>Time of Entry</th>
-            <th>Hours Worked</th>
-            <th>Task Description</th>
-            <th>Approved By</th>
-            <th>Developer</th> {/* Assuming you store developer name */}
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((entry) => (
-            <tr key={entry.id}>
-              <td>{entry.date}</td>
-              <td>{entry.time}</td>
-              <td>{entry.hoursWorked}</td>
-              <td>{entry.taskDescription}</td>
-              <td>{entry.approvedBy}</td>
-              <td>{entry.developerName || 'Unknown'}</td> {/* Handle missing names */}
+        <table className="timesheet-table">
+          <thead>
+            <tr>
+              <th onClick={toggleSortOrder} style={{ cursor: 'pointer' }}>
+                Date of Task {sortOrder === 'desc' ? <FaArrowDown /> : <FaArrowUp />}
+              </th>
+              <th>Time of Entry</th>
+              <th>Hours Worked</th>
+              <th>Task Description</th>
+              <th>Approved By</th>
+              <th>Developer</th>
+              {/* <th>Actions</th> */}
+              <th>Status</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filteredEntries.map((entry, index) => (
+              <tr key={entry.id}>
+                <td>{entry.date}</td>
+                <td>{entry.time}</td>
+                <td>{editIndex === index ? <input type="number" value={entry.hoursWorked} onChange={(e) => {
+                    const updatedEntry = {...entry, hoursWorked: e.target.value};
+                    setEntries(prev => prev.map((el, i) => i === index ? updatedEntry : el));
+                }} /> : entry.hoursWorked}</td>
+                <td>{editIndex === index ? <input type="text" value={entry.taskDescription} onChange={(e) => {
+                    const updatedEntry = {...entry, taskDescription: e.target.value};
+                    setEntries(prev => prev.map((el, i) => i === index ? updatedEntry : el));
+                }} /> : entry.taskDescription}</td>
+                <td>{entry.approvedBy}</td>
+                <td>{entry.developerName || 'Unknown'}</td>
+                {/* <td>
+                  {editIndex === index ? (
+                    <>
+                      <button className="button save-button" onClick={() => handleSave(index)}>Save</button>
+                      <button className="button cancel-button" onClick={handleCancel}>Cancel</button>
+                    </>
+                  ) : (
+                    <button className="button edit-button" onClick={() => handleEdit(index)}>Edit</button>
+                  )}
+                </td> */}
+                <td>{entry.status || 'Pending'}</td>
+                <td>
+                  <button onClick={() => handleApproval(entry.id, 'Approved')}><FaCheck /></button>
+                  <button onClick={() => handleApproval(entry.id, 'Rejected')}><FaTimes /></button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+      <footer className="footer">
+        <img src="hdfcergo_logo.jpeg" alt="Company Logo" className="footer-logo" />
+        <div className="footer-content">
+          <p>HDFC ERGO General Insurance Company Ltd.</p>
+          <p>1st Floor, HDFC House, Backbay Reclamation, H. T. Parekh Marg, Churchgate, Mumbai - 400020.</p>
+          <p><a href="mailto:contact@hdfcergo.com" style={{ color: 'inherit' }}>contact@hdfcergo.com</a></p>
+        </div>
+      </footer>
     </>
   );
 }
