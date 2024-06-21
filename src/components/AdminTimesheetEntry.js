@@ -6,53 +6,61 @@ import { FaArrowDown, FaArrowUp, FaCheck, FaTimes } from 'react-icons/fa'; // Im
 import * as XLSX from 'xlsx';
 
 function AdminTimesheetEntry() {
-  const [date, setDate] = useState('');
-  const [hoursWorked, setHoursWorked] = useState('');
-  const [taskDescription, setTaskDescription] = useState('');
-  const [approvedBy, setApprovedBy] = useState('');
   const [entries, setEntries] = useState([]);
   const [sortOrder, setSortOrder] = useState('desc'); // 'desc' for latest to oldest, 'asc' for oldest to latest
 
   const [userDetails, setUserDetails] = useState(null);
   const [userUid, setUserUid] = useState(null);
 
-  const [editIndex, setEditIndex] = useState(-1);
-
   const handleApproval = async (entryId, status) => {
-    const adminEntryRef = doc(db, "Users/admin/Entries", entryId);
-    let updates = { status: status };
-
-    // If rejecting, prompt for a reason
+    const entryRefAdmin = doc(db, "Users/admin/Entries", entryId);
+    let updates = { status };
+  
     if (status === 'Rejected') {
       const reason = prompt("Enter the reason for rejection:");
-      updates.comments = reason; // Save rejection comments
+      updates.comments = reason;
     }
-
+    else if (status === 'Approved') {
+      updates.comments = '';  // Clear out the comments
+    }
+  
     try {
-      // Fetch the current admin entry to get the developer's entry ID
-      const adminEntryDoc = await getDoc(adminEntryRef);
-      if (!adminEntryDoc.exists()) {
-        console.error("Document does not exist!");
-        return;
+      await updateDoc(entryRefAdmin, updates);
+  
+      const entrySnapshot = await getDoc(entryRefAdmin);
+      if (entrySnapshot.exists()) {
+        const entryData = entrySnapshot.data();
+        // Use devEntryId to update the developer's entry
+        if (entryData.devEntryId) {
+          updateDeveloperEntry(entryData.userId, entryData.devEntryId, updates);
+        } else {
+          console.error("Developer entry ID missing");
+        }
+      } else {
+        console.error("No entry found with ID:", entryId);
       }
-      const devEntryId = adminEntryDoc.data().devEntryId; // Assuming the developer's entry ID is stored like this
-
-      // Update the admin's entry
-      await updateDoc(adminEntryRef, updates);
-
-      // Update the developer's corresponding entry
-      if (devEntryId) {
-        const devEntryRef = doc(db, `Users/${userDetails.role}/Entries`, devEntryId);
-        await updateDoc(devEntryRef, updates);
-      }
-
-      loadEntries(); // Reload entries to reflect changes
-      alert(`Entry has been ${status.toLowerCase()}.`);
+  
+      loadEntries();  // Refresh entries to reflect updated status
     } catch (error) {
       console.error("Error updating entry:", error);
     }
-};
-
+  };
+  
+  const updateDeveloperEntry = async (userId, devEntryId, updates) => {
+    const entryRefDeveloper = doc(db, `Users/developer/Entries`, devEntryId);  // Adjust path as necessary
+  
+    try {
+      const devEntrySnapshot = await getDoc(entryRefDeveloper);
+      if (devEntrySnapshot.exists()) {
+        await updateDoc(entryRefDeveloper, updates);
+        console.log("Developer entry updated successfully");
+      } else {
+        console.error("No developer entry found with ID:", devEntryId);
+      }
+    } catch (error) {
+      console.error("Error updating developer's entry:", error);
+    }
+  };  
 
   const handleExport = () => {
     const ws = XLSX.utils.json_to_sheet(entries.map(entry => ({
@@ -76,69 +84,27 @@ function AdminTimesheetEntry() {
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setUserDetails(userData);
-          loadEntries(user.uid, userData.role);
+          loadEntries();
         }
       }
     });
   }, []);
 
   const loadEntries = async () => {
-    // Path to the 'Entries' subcollection under the 'admin' document
     const entriesRef = collection(db, "Users/admin/Entries");
     const q = query(entriesRef);
     const querySnapshot = await getDocs(q);
     const loadedEntries = querySnapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() }))
-      .sort(sortEntries); // Sort entries by date and time
+      .sort(sortEntries);
     setEntries(loadedEntries);
-  };  
+  };
 
   const handleLogout = async () => {
     await auth.signOut();
     window.location.href = "/login";
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const currentDate = new Date();
-    const entryData = {
-      userId: userUid,
-      date: currentDate.toLocaleDateString(),
-      time: currentDate.toLocaleTimeString(),
-      hoursWorked,
-      taskDescription,
-      approvedBy
-    };
-  
-    // Reference to the developer's entries collection
-    const developerEntriesRef = collection(db, `Users/${userDetails.role}/Entries`);
-  
-    // Reference to the admin's entries collection
-    // Assuming 'adminId' is known and is static, replace 'yourAdminId' with actual admin's UID
-    const adminEntriesRef = collection(db, `Users/admin/Entries`);
-  
-    try {
-      // Add to developer's entries
-      const devDocRef = await addDoc(developerEntriesRef, entryData);
-      // Optionally, add to admin's entries
-      const adminDocRef = await addDoc(adminEntriesRef, {
-        ...entryData,
-        developerId: userUid,  // Include developer ID to track whose entry it is
-        developerName: userDetails.name  // Optionally include developer name for easier identification
-      });
-  
-      // Update local state
-      setEntries(prevEntries => [
-        { id: devDocRef.id, ...entryData },
-        ...prevEntries
-      ].sort(sortEntries));
-  
-      resetFormFields();
-    } catch (error) {
-      console.error("Error adding document: ", error);
-    }
-  };
-  
   const toggleSortOrder = () => {
     setSortOrder(prevOrder => prevOrder === 'desc' ? 'asc' : 'desc');
     setEntries(prevEntries => [...prevEntries].sort(sortEntries));
@@ -153,65 +119,22 @@ function AdminTimesheetEntry() {
   const [filter, setFilter] = useState({
     date: '',
     developerName: '',
-    approvedBy: ''
+    approvedBy: '',
+    status: ''
   });
-  
+
   const handleFilterChange = (key, value) => {
     setFilter(prev => ({ ...prev, [key]: value }));
   };
-  
+
   const filteredEntries = useMemo(() => {
     return entries.filter(entry => {
       return (filter.date ? entry.date.includes(filter.date) : true) &&
              (filter.developerName ? entry.developerName.toLowerCase().includes(filter.developerName.toLowerCase()) : true) &&
-             (filter.approvedBy ? entry.approvedBy.toLowerCase().includes(filter.approvedBy.toLowerCase()) : true);
+             (filter.approvedBy ? entry.approvedBy.toLowerCase().includes(filter.approvedBy.toLowerCase()) : true) &&
+             (filter.status ? entry.status === filter.status : true);
     }).sort(sortEntries);
-  }, [entries, filter, sortOrder]);  
-
-  const resetFormFields = () => {
-    setDate('');
-    setHoursWorked('');
-    setTaskDescription('');
-    setApprovedBy('');
-  };
-
-  const handleEdit = (index) => {
-    setEditIndex(index);
-    const entry = entries[index];
-    setDate(entry.date);
-    setHoursWorked(entry.hoursWorked);
-    setTaskDescription(entry.taskDescription);
-    setApprovedBy(entry.approvedBy);
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this entry?')) {
-      try {
-        await deleteDoc(doc(db, `Users/${userDetails.role}/Entries`, id));
-        loadEntries(userUid, userDetails.role);
-        resetFormFields();
-      } catch (error) {
-        console.error("Error deleting document: ", error);
-      }
-    }
-  };
-
-  const handleSave = async (index) => {
-    const entry = entries[index];
-    const entryRef = doc(db, `Users/admin/Entries`, entry.id);
-    try {
-      await updateDoc(entryRef, entry);
-      setEntries(prev => prev.map((el, i) => i === index ? entry : el).sort(sortEntries));
-      setEditIndex(-1);
-      alert("Entry updated successfully!");
-    } catch (error) {
-      console.error("Error updating entry:", error);
-    }
-  };
-
-  const handleCancel = () => {
-    setEditIndex(-1);
-  };
+  }, [entries, filter, sortOrder]);
 
   return (
     <>
@@ -227,27 +150,37 @@ function AdminTimesheetEntry() {
               <button className="button export-button" onClick={handleExport}>Export as Excel</button>
             </div>
             <h1>Admin Timesheet Entry</h1>
-          <div className="filter-section">
-            <h3 className="filter-heading">Filter Entries:</h3>
-            <input
-              type="date"
-              value={filter.date}
-              onChange={(e) => handleFilterChange('date', e.target.value)}
-              placeholder="Filter by Date"
-            />
-            <input
-              type="text"
-              value={filter.developerName}
-              onChange={(e) => handleFilterChange('developerName', e.target.value)}
-              placeholder="Filter by Developer Name"
-            />
-            <input
-              type="text"
-              value={filter.approvedBy}
-              onChange={(e) => handleFilterChange('approvedBy', e.target.value)}
-              placeholder="Filter by Approved By"
-            />
-          </div>
+            <div className="filter-section">
+              <h3 className="filter-heading">Filter Entries:</h3>
+              <input
+                type="date"
+                value={filter.date}
+                onChange={(e) => handleFilterChange('date', e.target.value)}
+                placeholder="Filter by Date"
+              />
+              <input
+                type="text"
+                value={filter.developerName}
+                onChange={(e) => handleFilterChange('developerName', e.target.value)}
+                placeholder="Filter by Developer Name"
+              />
+              <input
+                type="text"
+                value={filter.approvedBy}
+                onChange={(e) => handleFilterChange('approvedBy', e.target.value)}
+                placeholder="Filter by Approved By"
+              />
+              <select
+                  value={filter.status}
+                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                  placeholder="Filter by Status"
+                >
+                  <option value="">All</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Rejected">Rejected</option>
+                  <option value="Pending">Pending</option>
+                </select>
+            </div>
           </>
         ) : (
           <p>Loading...</p>
@@ -265,40 +198,26 @@ function AdminTimesheetEntry() {
               <th>Task Description</th>
               <th>Approved By</th>
               <th>Developer</th>
-              {/* <th>Actions</th> */}
               <th>Status</th>
+              <th>Approve/Reject</th>
+              <th>Comments</th>
             </tr>
           </thead>
           <tbody>
             {filteredEntries.map((entry, index) => (
-              <tr key={entry.id}>
+              <tr key={entry.id} style={{ backgroundColor: entry.status === 'Approved' ? 'lightgreen' : entry.status === 'Rejected' ? 'grey' : 'none' }}>
                 <td>{entry.date}</td>
                 <td>{entry.time}</td>
-                <td>{editIndex === index ? <input type="number" value={entry.hoursWorked} onChange={(e) => {
-                    const updatedEntry = {...entry, hoursWorked: e.target.value};
-                    setEntries(prev => prev.map((el, i) => i === index ? updatedEntry : el));
-                }} /> : entry.hoursWorked}</td>
-                <td>{editIndex === index ? <input type="text" value={entry.taskDescription} onChange={(e) => {
-                    const updatedEntry = {...entry, taskDescription: e.target.value};
-                    setEntries(prev => prev.map((el, i) => i === index ? updatedEntry : el));
-                }} /> : entry.taskDescription}</td>
+                <td>{entry.hoursWorked}</td>
+                <td>{entry.taskDescription}</td>
                 <td>{entry.approvedBy}</td>
                 <td>{entry.developerName || 'Unknown'}</td>
-                {/* <td>
-                  {editIndex === index ? (
-                    <>
-                      <button className="button save-button" onClick={() => handleSave(index)}>Save</button>
-                      <button className="button cancel-button" onClick={handleCancel}>Cancel</button>
-                    </>
-                  ) : (
-                    <button className="button edit-button" onClick={() => handleEdit(index)}>Edit</button>
-                  )}
-                </td> */}
-                <td>{entry.status || 'Pending'}</td>
+                <td>{entry.status}</td>
                 <td>
                   <button onClick={() => handleApproval(entry.id, 'Approved')}><FaCheck /></button>
                   <button onClick={() => handleApproval(entry.id, 'Rejected')}><FaTimes /></button>
                 </td>
+                <td>{entry.comments}</td>
               </tr>
             ))}
           </tbody>

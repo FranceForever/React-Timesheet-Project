@@ -162,7 +162,7 @@ function LoginPage() {
       });
   
       alert('Registration successful!'); // Notify user of successful registration
-      navigate('/login');
+      setStage(0);
     } catch (error) {
       if (error.code === "auth/email-already-in-use") {
         alert('User already exists!'); // Specific alert for duplicate email

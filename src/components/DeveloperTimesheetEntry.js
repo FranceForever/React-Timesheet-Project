@@ -54,22 +54,22 @@ function DeveloperTimesheetEntry() {
   const validateEntry = () => {
     // Validate all required fields are filled
     if (!date || !hoursWorked || !taskDescription || !approvedBy) {
-        alert("All fields must be filled out.");
-        return false; // Return false to indicate invalid inputs
+      alert("All fields must be filled out.");
+      return false; // Return false to indicate invalid inputs
     }
     // Validate hours worked is within a reasonable range
     if (hoursWorked < 0 || hoursWorked > 100) {
-        alert("Hours Worked must be between 0 and 100.");
-        return false; // Return false to indicate invalid inputs
+      alert("Hours Worked must be between 0 and 100.");
+      return false; // Return false to indicate invalid inputs
     }
     return true; // Return true to indicate valid inputs
-};
+  };
 
-const formatDate = (dateString) => {
-  const dateObj = new Date(dateString);
-  const formattedDate = dateObj.toLocaleDateString('en-GB');
-  return formattedDate;
-};
+  const formatDate = (dateString) => {
+    const dateObj = new Date(dateString);
+    const formattedDate = dateObj.toLocaleDateString('en-GB');
+    return formattedDate;
+  };
 
   const handleLogout = async () => {
     await auth.signOut();
@@ -80,46 +80,52 @@ const formatDate = (dateString) => {
     const dateA = new Date(a.date);
     const dateB = new Date(b.date);
     return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
-};
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  if (!validateEntry()) return;
-
-  const entryData = {
-    userId: userUid,
-    date: date,
-    time: new Date().toLocaleTimeString(),
-    hoursWorked,
-    taskDescription,
-    approvedBy,
-    developerName: userDetails.name,
-    creationDate: new Date().toLocaleDateString('en-GB') // Store the local machine's current date
   };
 
-  const developerEntriesRef = collection(db, `Users/${userDetails.role}/Entries`);
-  const adminEntriesRef = collection(db, "Users/admin/Entries");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  try {
-    const devDocRef = await addDoc(developerEntriesRef, entryData);
-    await addDoc(adminEntriesRef, {
-      ...entryData,
-      developerId: userUid
-    });
+    if (!validateEntry()) return;
 
-    setEntries(prevEntries => [
-      { id: devDocRef.id, ...entryData },
-      ...prevEntries
-    ].sort(entrySorter));    
+    const entryData = {
+      userId: userUid,
+      date: date,
+      time: new Date().toLocaleTimeString(),
+      hoursWorked,
+      taskDescription,
+      approvedBy,
+      developerName: userDetails.name,
+      creationDate: new Date().toLocaleDateString('en-GB'), // Store the local machine's current date
+      role: userDetails.role,
+      status: 'Pending'  // Set the initial status to 'Pending'
+    };
 
-    resetFormFields();
-    alert("Entry added successfully!");
-  } catch (error) {
-    console.error("Error adding document: ", error);
-  }
-};
+    const developerEntriesRef = collection(db, `Users/${userDetails.role}/Entries`);
+    const adminEntriesRef = collection(db, "Users/admin/Entries");
 
+    try {
+      // Add document to developer's collection and get the document reference
+      const devDocRef = await addDoc(developerEntriesRef, entryData);
+
+      // Add the same entry to the admin's collection with the developerId attribute
+      await addDoc(adminEntriesRef, {
+        ...entryData,
+        developerId: userUid,
+        devEntryId: devDocRef.id  // Store the developer's entry ID in the admin's collection
+      });
+
+      // Update local state to include the new entry with the id
+      setEntries(prevEntries => [
+        { id: devDocRef.id, ...entryData },
+        ...prevEntries
+      ].sort(entrySorter));
+
+      resetFormFields();
+      alert("Entry added successfully!");
+    } catch (error) {
+      console.error("Error adding document: ", error);
+    }
+  };
 
   const resetFormFields = () => {
     setDate('');
@@ -141,6 +147,8 @@ const handleSubmit = async (e) => {
     if (window.confirm('Are you sure you want to delete this entry?')) {
       try {
         await deleteDoc(doc(db, `Users/${userDetails.role}/Entries`, id));
+        // Also delete the entry from the admin's collection
+        await deleteDoc(doc(db, "Users/admin/Entries", id));
         loadEntries(userUid, userDetails.role);
         resetFormFields();
         alert("Entry deleted successfully!");
@@ -157,26 +165,40 @@ const handleSubmit = async (e) => {
       hoursWorked,
       taskDescription,
       approvedBy,
+      status: 'Pending',  // Reset status to Pending on resubmit
+      comments: ''  // Clear previous comments
     };
+  
     const entryRef = doc(db, `Users/${userDetails.role}/Entries`, entry.id);
     try {
       await updateDoc(entryRef, updatedData);
-      // Update sorting directly using the entrySorter function
+  
+      // Fetch the admin entry using the devEntryId stored in the developer's entry
+      const adminEntryQuery = query(collection(db, "Users/admin/Entries"), where("devEntryId", "==", entry.id));
+      const adminEntrySnapshot = await getDocs(adminEntryQuery);
+  
+      if (!adminEntrySnapshot.empty) {
+        const adminEntryDoc = adminEntrySnapshot.docs[0];
+        const adminEntryRef = adminEntryDoc.ref;
+        await updateDoc(adminEntryRef, updatedData);
+      } else {
+        console.error("No corresponding admin entry found for devEntryId:", entry.id);
+      }
+  
+      // Update local state
       setEntries(prev => prev.map((el, i) => i === editIndex ? { ...el, ...updatedData } : el).sort(entrySorter));
       setEditIndex(-1);
       resetFormFields();
-      alert("Entry saved successfully!");
+      alert("Entry resubmitted successfully!");
     } catch (error) {
       console.error("Error updating entry:", error);
     }
-};
-
+  };  
 
   const handleCancel = () => {
     resetFormFields();
     setEditIndex(-1);
   };
-
 
   return (
     <>
@@ -231,28 +253,30 @@ const handleSubmit = async (e) => {
               <th>Hours Worked</th>
               <th>Task Description</th>
               <th>Approved By</th>
+              <th>Status</th>
+              <th>Comments</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {entries.map((entry, index) => (
-              <tr key={entry.id}>
-                <td>{entry.creationDate}</td> {/* Display the creation date */}
-                <td>{formatDate(entry.date)}</td> 
+              <tr key={entry.id} style={{ backgroundColor: entry.status === 'Approved' ? 'lightgreen' : entry.status === 'Rejected' ? 'grey' : 'none' }}>
+                <td>{entry.creationDate}</td>
+                <td>{formatDate(entry.date)}</td>
                 <td>{entry.time}</td>
                 <td>{editIndex === index ? <input type="number" value={hoursWorked} onChange={e => setHoursWorked(e.target.value)} /> : entry.hoursWorked}</td>
                 <td>{editIndex === index ? <input type="text" value={taskDescription} onChange={e => setTaskDescription(e.target.value)} /> : entry.taskDescription}</td>
                 <td>{editIndex === index ? <input type="text" value={approvedBy} onChange={e => setApprovedBy(e.target.value)} /> : entry.approvedBy}</td>
+                <td>{entry.status}</td>
+                <td>{entry.comments}</td>
                 <td>
-                  {editIndex === index ? (
+                  {entry.status === 'Rejected' && editIndex !== index && (
+                    <button className="button edit-button" onClick={() => handleEdit(index)}>Edit</button>
+                  )}
+                  {editIndex === index && (
                     <>
-                      <button className="button save-button" onClick={() => handleSave(index)}>Save</button>
+                      <button className="button save-button" onClick={handleSave}>Save</button>
                       <button className="button cancel-button" onClick={handleCancel}>Cancel</button>
-                    </>
-                  ) : (
-                    <>
-                      <button className="button edit-button" onClick={() => handleEdit(index)}>Edit</button>
-                      <button className="button delete-button" onClick={() => handleDelete(entry.id)}>Delete</button>
                     </>
                   )}
                 </td>
