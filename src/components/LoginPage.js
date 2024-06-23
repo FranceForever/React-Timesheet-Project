@@ -247,7 +247,7 @@ function LoginPage() {
           </div>
         ) : (
           <div className={`image-container ${stage === 1 || stage === 2 ? 'centered' : 'initial-centered'}`}>
-            <img src="/hdfcergo_logo.jpeg" alt="Login" className="section-image" />
+            <img src="/time_logo.png" alt="Login" className="section-image" />
           </div>
         )}
       </div>

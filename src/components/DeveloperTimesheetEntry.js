@@ -203,7 +203,7 @@ function DeveloperTimesheetEntry() {
   return (
     <>
       <div className="navbar">
-        <img src="/hdfcergo_logo.jpeg" alt="Logo" className="logo" />
+        <img src="/time_logo.png" alt="Logo" className="logo" />
         <button className="logout-button button" onClick={handleLogout}>Logout</button>
       </div>
       <div className="top-section full-screen">
@@ -260,23 +260,29 @@ function DeveloperTimesheetEntry() {
           </thead>
           <tbody>
             {entries.map((entry, index) => (
-              <tr key={entry.id} style={{ backgroundColor: entry.status === 'Approved' ? 'lightgreen' : entry.status === 'Rejected' ? 'grey' : 'none' }}>
+              <tr key={entry.id} style={{ backgroundColor: entry.status === 'Approved' ? 'lightgreen' : entry.status === 'Rejected' ? 'red' : 'none' }}>
                 <td>{entry.creationDate}</td>
                 <td>{formatDate(entry.date)}</td>
                 <td>{entry.time}</td>
-                <td>{editIndex === index ? <input type="number" value={hoursWorked} onChange={e => setHoursWorked(e.target.value)} /> : entry.hoursWorked}</td>
-                <td>{editIndex === index ? <input type="text" value={taskDescription} onChange={e => setTaskDescription(e.target.value)} /> : entry.taskDescription}</td>
-                <td>{editIndex === index ? <input type="text" value={approvedBy} onChange={e => setApprovedBy(e.target.value)} /> : entry.approvedBy}</td>
+                <td>{entry.hoursWorked}</td>
+                <td>{entry.taskDescription}</td>
+                <td>{entry.approvedBy}</td>
                 <td>{entry.status}</td>
                 <td>{entry.comments}</td>
                 <td>
-                  {entry.status === 'Rejected' && editIndex !== index && (
-                    <button className="button edit-button" onClick={() => handleEdit(index)}>Edit</button>
-                  )}
-                  {editIndex === index && (
+                  {entry.status !== 'Approved' && (
                     <>
-                      <button className="button save-button" onClick={handleSave}>Save</button>
-                      <button className="button cancel-button" onClick={handleCancel}>Cancel</button>
+                      {editIndex === index ? (
+                        <>
+                          <button className="button save-button" onClick={handleSave}>Save</button>
+                          <button className="button cancel-button" onClick={handleCancel}>Cancel</button>
+                        </>
+                      ) : (
+                        <>
+                          <button className="button edit-button" onClick={() => handleEdit(index)}>Edit</button>
+                          <button className="button delete-button" onClick={() => handleDelete(entry.id)}>Delete</button>
+                        </>
+                      )}
                     </>
                   )}
                 </td>
@@ -286,11 +292,10 @@ function DeveloperTimesheetEntry() {
         </table>
       </div>
       <footer className="footer">
-        <img src="hdfcergo_logo.jpeg" alt="Company Logo" className="footer-logo" />
+        <img src="/time_logo.png" alt="Company Logo" className="footer-logo" />
         <div className="footer-content">
-          <p>HDFC ERGO General Insurance Company Ltd.</p>
-          <p>1st Floor, HDFC House, Backbay Reclamation, H. T. Parekh Marg, Churchgate, Mumbai - 400020.</p>
-          <p><a href="mailto:contact@hdfcergo.com" style={{ color: 'inherit' }}>contact@hdfcergo.com</a></p>
+          <p>Armaan Ghosh</p>
+          <p><a href="mailto:armaanghosh2005@gmail.com" style={{ color: 'inherit' }}>armaanghosh2005@gmail.com</a></p>
         </div>
       </footer>
     </>

@@ -139,7 +139,7 @@ function AdminTimesheetEntry() {
   return (
     <>
       <div className="navbar">
-        <img src="hdfcergo_logo.jpeg" alt="Logo" className="logo" />
+        <img src="/time_logo.png" alt="Logo" className="logo" />
         <button className="logout-button button" onClick={handleLogout}>Logout</button>
       </div>
       <div className="top-section full-screen">
@@ -224,11 +224,10 @@ function AdminTimesheetEntry() {
         </table>
       </div>
       <footer className="footer">
-        <img src="hdfcergo_logo.jpeg" alt="Company Logo" className="footer-logo" />
+        <img src="/time_logo.png" alt="Company Logo" className="footer-logo" />
         <div className="footer-content">
-          <p>HDFC ERGO General Insurance Company Ltd.</p>
-          <p>1st Floor, HDFC House, Backbay Reclamation, H. T. Parekh Marg, Churchgate, Mumbai - 400020.</p>
-          <p><a href="mailto:contact@hdfcergo.com" style={{ color: 'inherit' }}>contact@hdfcergo.com</a></p>
+          <p>Armaan Ghosh</p>
+          <p><a href="mailto:armaanghosh2005@gmail.com" style={{ color: 'inherit' }}>armaanghosh2005@gmail.com</a></p>
         </div>
       </footer>
     </>
