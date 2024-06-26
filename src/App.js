@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './components/LoginPage';
-import RegisterPage from './components/RegisterPage';
 import AdminTimesheetEntry from './components/AdminTimesheetEntry';
 import DeveloperTimesheetEntry from './components/DeveloperTimesheetEntry';
 import { auth } from './components/firebase';
@@ -20,7 +19,6 @@ function App() {
         {/* <Route path="/" element={user ? <Navigate to="/admin-timesheet"/> : <LoginPage />} /> */}
         <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
         <Route path="/admin-timesheet" element={<AdminTimesheetEntry />} />
         <Route path="/developer-timesheet" element={<DeveloperTimesheetEntry />} />
       </Routes>
